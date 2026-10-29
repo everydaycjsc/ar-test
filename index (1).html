@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AR թեստ · դիսպենսերներ</title>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root { --ink:#0d3b7a; --blue:#1b7fd6; --bg:#eef4fb; --line:#c9d8ea; --muted:#5a6b7e; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:560px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:4px 0 12px; }
+  .tabs { display:flex; gap:8px; margin-bottom:10px; }
+  .tabs button { flex:1; padding:10px; border:2px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; font-size:15px; font-weight:600; }
+  .tabs button[aria-pressed="true"] { border-color:var(--blue); background:var(--blue); color:#fff; }
+  model-viewer { width:100%; height:62vh; background:#fff; border-radius:14px; border:1px solid var(--line); }
+  .ar-btn { position:absolute; left:50%; bottom:16px; transform:translateX(-50%); padding:12px 20px; border:0; border-radius:999px; background:var(--blue); color:#fff; font-size:16px; font-weight:700; white-space:nowrap; }
+  .size { text-align:center; font-size:15px; margin:10px 0 4px; }
+  .status { font-size:13px; color:var(--muted); background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px; margin-top:10px; line-height:1.5; }
+  .status b { color:var(--ink); }
+  .qr { display:flex; align-items:center; gap:14px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px; margin-top:10px; }
+  .qr[hidden] { display:none; }
+  .qr p { margin:0; font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>AR թեստ</h1>
+  <div class="tabs">
+    <button type="button" data-model="black" aria-pressed="true">Սև</button>
+    <button type="button" data-model="white" aria-pressed="false">Սպիտակ</button>
+  </div>
+
+  <model-viewer id="mv"
+    src="dispenser_black_v1.glb"
+    ios-src="dispenser_black_v1.usdz"
+    alt="Դիսպենսերի 3D մոդել"
+    camera-controls touch-action="pan-y"
+    ar ar-modes="webxr scene-viewer quick-look"
+    ar-scale="fixed" ar-placement="floor"
+    shadow-intensity="1">
+    <button slot="ar-button" class="ar-btn">Տեսնել ձեր տարածքում</button>
+  </model-viewer>
+
+  <div class="size" id="size">Լ × Բ × Խ՝ …</div>
+
+  <div class="qr" id="qrBox" hidden>
+    <div id="qr"></div>
+    <p>Սկանավորեք հեռախոսով՝ AR-ը փորձելու համար</p>
+  </div>
+
+  <div class="status">
+    <div>Սարք. <b id="device">…</b></div>
+    <div>AR հասանելի է. <b id="arok">ստուգվում է…</b></div>
+    <div>Բեռնում. <b id="load">…</b></div>
+    <div>Վերջին AR վիճակ. <b id="arstatus">—</b></div>
+  </div>
+</main>
+
+<script>
+  const MODELS = {
+    black: { glb: "dispenser_black_v1.glb", usdz: "dispenser_black_v1.usdz", size: "34.8 × 146.8 × 35.6 սմ" },
+    white: { glb: "dispenser_white_v1.glb", usdz: "dispenser_white_v1.usdz", size: "34.0 × 146.1 × 36.2 սմ" }
+  };
+  const mv = document.getElementById("mv");
+  const $ = (id) => document.getElementById(id);
+
+  const ua = navigator.userAgent;
+  const isPhone = /iPhone|iPad|iPod|Android/.test(ua);
+  $("device").textContent = /iPhone|iPad|iPod/.test(ua) ? "iPhone / iPad" : /Android/.test(ua) ? "Android" : "Համակարգիչ";
+  if (!isPhone && window.QRCode) {
+    $("qrBox").hidden = false;
+    new QRCode($("qr"), { text: location.href.split("#")[0], width: 120, height: 120 });
+  }
+
+  function show(key) {
+    const m = MODELS[key];
+    $("load").textContent = "բեռնվում է…";
+    mv.src = m.glb;
+    mv.iosSrc = m.usdz;
+    $("size").textContent = "Լ × Բ × Խ՝ " + m.size;
+    document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.model === key)));
+  }
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => show(b.dataset.model)));
+
+  mv.addEventListener("load", () => {
+    $("load").textContent = "✅ մոդելը բեռնվեց";
+    $("arok").textContent = mv.canActivateAR ? "✅ այո" : "❌ ոչ (այս սարքում/բրաուզերում AR չկա)";
+  });
+  mv.addEventListener("error", () => { $("load").textContent = "❌ չհաջողվեց բեռնել ֆայլը"; });
+  mv.addEventListener("ar-status", (e) => { $("arstatus").textContent = e.detail.status; });
+
+  show("black");
+</script>
+</body>
+</html>

@@ -10,6 +10,7 @@
 <style>
   :root { --blue:#1a9be0; --ink:#1f2a37; --muted:#8a99a8; --line:#e2e8ef; --bg:#f3f6f9; --red:#e8202a; --btn-soft:#c9d6e3; }
   * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
   html,body { margin:0; }
   body { font-family:"Noto Sans Armenian",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
   body.lock { overflow:hidden; }
@@ -46,9 +47,9 @@
   @media (max-width:860px) { .product { grid-template-columns:1fr; gap:20px; padding:8px 16px 32px; } .crumbs { padding:14px 16px; font-size:13px; } }
 
   .gallery { position:relative; aspect-ratio:1/1; max-height:560px; width:100%; }
-  .gallery model-viewer { width:100%; height:100%; background:transparent; --poster-color:transparent; pointer-events:none; }
-  .photo-note { position:absolute; left:8px; top:8px; font-size:11px; color:var(--muted); background:#ffffffcc; padding:3px 8px; border-radius:6px; }
-
+  .gallery img { width:100%; height:100%; object-fit:contain; display:block; }
+  .nophoto { position:absolute; inset:0; display:grid; place-items:center; text-align:center; color:var(--muted); font-size:14px; border:2px dashed var(--line); border-radius:16px; padding:24px; }
+  
   /* NEW: the only new element on the product page */
   .btn-3d { position:absolute; right:12px; top:12px; display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border:2px solid var(--blue); background:#fff; color:var(--blue); border-radius:999px; font-weight:700; font-size:15px; box-shadow:0 4px 14px #1a9be033; }
   .btn-3d svg { width:20px; height:20px; }
@@ -86,8 +87,8 @@
   .ptop { display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--line); }
   .ptop .t { flex:1; font-weight:600; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .close { width:40px; height:40px; border-radius:50%; border:0; background:var(--bg); font-size:18px; color:var(--ink); flex:none; }
-  .stage { position:relative; flex:1; display:flex; background:var(--bg); }
-  .stage model-viewer { flex:1; width:100%; --poster-color:var(--bg); }
+  .stage { position:relative; flex:1; min-height:0; background:var(--bg); }
+  .stage model-viewer { position:absolute; inset:0; width:100%; height:100%; --poster-color:var(--bg); }
   .tip { position:absolute; left:50%; top:12px; transform:translateX(-50%); font-size:13px; color:var(--muted); background:#fff; padding:5px 12px; border-radius:999px; white-space:nowrap; }
   .loading { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:#fff; padding:8px 16px; border-radius:999px; font-size:14px; box-shadow:0 2px 8px #0002; }
   .err { position:absolute; inset:0; display:grid; place-items:center; text-align:center; background:var(--bg); }
@@ -130,8 +131,8 @@
 
 <section class="product">
   <div class="gallery">
-    <model-viewer id="photo" alt="" camera-orbit="25deg 80deg auto" disable-zoom interaction-prompt="none"></model-viewer>
-    <span class="photo-note">Այստեղ կլինի ապրանքի լուսանկարը</span>
+    <img id="photo" alt="">
+    <div class="nophoto" id="nophoto" hidden><div>Ապրանքի լուսանկարը<br>(վերբեռնեք GitHub՝ <b id="photoName"></b>)</div></div>
     <button class="btn-3d" id="open3d" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg>3D / AR
     </button>
@@ -169,7 +170,7 @@
       <button class="close" id="close3d" type="button" aria-label="Փակել">✕</button>
     </div>
     <div class="stage">
-      <model-viewer id="mv" loading="lazy" camera-controls touch-action="none" shadow-intensity="1"
+      <model-viewer id="mv" loading="lazy" camera-orbit="25deg 80deg auto" camera-controls touch-action="none" shadow-intensity="1"
         ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="floor" interaction-prompt="none">
         <button slot="ar-button" style="display:none"></button>
       </model-viewer>
@@ -197,8 +198,8 @@
   /* Նախատիպի տվյալներ. իրական էջում գալիս են ադմինի ar_* դաշտերից */
   const BASE = "https://everydaycjsc.github.io/ar-test/";
   const PRODUCTS = {
-    black: { name:"Դիսպենսեր տաք և սառը ջրի, մոդել 1", price:"120 000 ֏", glb:"dispenser_black_v1.glb", usdz:"dispenser_black_v1.usdz", w:34.8, h:146.8, d:35.6 },
-    white: { name:"Դիսպենսեր տաք և սառը ջրի, մոդել 2", price:"115 000 ֏", glb:"dispenser_white_v1.glb", usdz:"dispenser_white_v1.usdz", w:34.0, h:146.1, d:36.2 }
+    black: { name:"Դիսպենսեր տաք և սառը ջրի, մոդել 1", price:"120 000 ֏", glb:"dispenser_black_v1.glb", usdz:"dispenser_black_v1.usdz", photo:"dispenser_black.jpg", w:34.8, h:146.8, d:35.6 },
+    white: { name:"Դիսպենսեր տաք և սառը ջրի, մոդել 2", price:"115 000 ֏", glb:"dispenser_white_v1.glb", usdz:"dispenser_white_v1.usdz", photo:"dispenser_white.jpg", w:34.0, h:146.1, d:36.2 }
   };
   const $ = (id) => document.getElementById(id);
   const q = new URLSearchParams(location.search);
@@ -211,10 +212,13 @@
   $("dims").textContent = `Լ × Բ × Խ՝ ${P.w} × ${P.h} × ${P.d} սմ`;
   $("specs").innerHTML = `<dt>Չափսեր</dt><dd>${P.w} × ${P.h} × ${P.d} սմ (շշով)</dd><dt>Ջուր</dt><dd>Տաք և սառը</dd><dt>Այլ մոդել</dt><dd><a href="?p=black" style="color:var(--blue)">Մոդել 1</a> · <a href="?p=white" style="color:var(--blue)">Մոդել 2</a></dd>`;
 
-  $("photo").src = BASE + P.glb;
+  const photo = $("photo");
+  photo.alt = P.name;
+  photo.onerror = () => { photo.hidden = true; $("photoName").textContent = P.photo; $("nophoto").hidden = false; };
+  photo.src = BASE + P.photo;
 
   const mv = $("mv");
-  mv.src = BASE + P.glb; mv.iosSrc = BASE + P.usdz; mv.alt = P.name;
+  mv.src = BASE + P.glb; mv.iosSrc = BASE + P.usdz; mv.alt = P.name; mv.poster = BASE + P.photo;
   mv.addEventListener("load", () => { $("loading").hidden = true; $("err").hidden = true; });
   mv.addEventListener("error", () => { $("loading").hidden = true; $("err").hidden = false; });
   mv.addEventListener("camera-change", (e) => { if (e.detail.source === "user-interaction") $("tip").hidden = true; });
